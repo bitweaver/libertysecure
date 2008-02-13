@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.1 2008/02/13 00:52:28 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.2 2008/02/13 08:04:29 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.1 $ $Date: 2008/02/13 00:52:28 $
+* @version $Revision: 1.2 $ $Date: 2008/02/13 08:04:29 $
 * @class LibertySecure
 */
 
@@ -45,18 +45,42 @@ function secure_register_permissions(){
 /********* SERVICE FUNCTIONS *********/
 
 function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
-	global $gBitSystem;
+	global $gBitSystem, $gBitUser;
 	$ret = array();
 	$traceArr = debug_backtrace();
 	array_shift($traceArr);
 	foreach ($traceArr as $arr) {
-		if (  $arr['function'] == 'getContentList' ){
-			// @TODO add to query
-			/*
-			$ret['select_sql'] = ""; 
-			$ret['join_sql'] = "";
-			$ret['bind_vars'][] = ;
-			 */
+		if (  $arr['function'] == 'getContentList' && !$gBitUser->isAdmin() ){
+			// @TODO bugcheck  query
+			// $ret['select_sql'] = ""; 
+			$ret['join_sql'] = "LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm ON ( lcpm.`content_type_guid` = lc.`content_type_guid` )
+				LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcperm ON (lc.`content_id`=lcperm.`content_id`)
+				LEFT OUTER JOIN `".BIT_DB_PREFIX."users_groups_map` ugsm ON ( ugsm.`group_id`=lcperm.`group_id`)
+				LEFT OUTER JOIN `".BIT_DB_PREFIX."users_group_permissions` ugp ON ( ugsm.`group_id`=ugp.`group_id` )";
+			$ret['bind_vars'] = array( $gBitUser->mUserId, 'y', $gBitUser->mUserId, 'view' );
+			$ret['where_sql'] = " AND lcpm.content_type_guid IS NULL 
+								OR  
+								( ugp.group_id IS NOT NULL
+									AND 
+									( lcperm.perm_name IS NULL AND ( ugp.`perm_name` = lcpm.`perm_name` ) 
+										OR 
+										( lcperm.perm_name != lcpm.`perm_name`
+										  OR 
+										  ( lcperm.perm_name = lcpm.`perm_name` 
+											AND 
+											ugsm.user_id = ? 
+											AND 
+											(
+												( lcperm.is_revoked != ? OR lcperm.is_revoked IS NULL) 
+												OR 
+												lc.`user_id`= ? 
+											) 
+										  ) 
+										) 
+									) 
+									AND 
+									( lcpm.`perm_type` = ? )
+								)";  
 			break;
 		};
 	}
