@@ -1,20 +1,20 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.2 2008/02/13 08:04:29 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.3 2008/02/20 19:05:58 nickpalmer Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.2 $ $Date: 2008/02/13 08:04:29 $
+* @version $Revision: 1.3 $ $Date: 2008/02/20 19:05:58 $
 * @class LibertySecure
 */
 
 function secure_register_permissions(){
-	global $gBitSystem, $gBitDb, $gLibertySystem;
+	global $gBitSystem, $gLibertySystem;
 
 	// these are the common basic permission types across packages
 	$permissionTypes = array('view', 'edit', 'admin');
 
 	// dump all perms in liberty_secure_permissions_map table
-	$gBitDb->query( "DELETE FROM `".BIT_DB_PREFIX."liberty_secure_permissions_map`" );
+	$gBitSystem->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."liberty_secure_permissions_map`" );
 
 	// step through each loaded content types
 	foreach( $gLibertySystem->mContentTypes as $type ){
@@ -25,15 +25,15 @@ function secure_register_permissions(){
 			$storeSql = "INSERT INTO";
 			foreach( $permissionTypes as $perm ){
 				$contentPerm = "m".ucfirst($perm)."ContentPerm";
-				// get default perms
-				if ( isset( $content->$contentPerm )  && isset( $content->mType['content_type_guid'] ) ){
+				// get default perms. Skip packages with defulat p_admin bs.
+				if ( isset( $content->$contentPerm )  && isset( $content->mType['content_type_guid'] ) && $content->$contentPerm != 'p_admin_content' ){
 					$bindVars = array();
 					$bindVars[] = $perm;
 					$bindVars[] = $content->$contentPerm;
 					$bindVars[] = $content->mType['content_type_guid'];
 					// store them in liberty_secure_permissions_map table
 					$storeSql = "INSERT INTO `".BIT_DB_PREFIX."liberty_secure_permissions_map`(`perm_type`,`perm_name`,`content_type_guid`) VALUES (?,?,?)";
-					$gBitDb->mDb->query( $storeSql, $bindVars );
+					$gBitSystem->mDb->query( $storeSql, $bindVars );
 				}
 			}
 		}
@@ -47,43 +47,38 @@ function secure_register_permissions(){
 function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 	global $gBitSystem, $gBitUser;
 	$ret = array();
-	$traceArr = debug_backtrace();
-	array_shift($traceArr);
-	foreach ($traceArr as $arr) {
-		if (  $arr['function'] == 'getContentList' && !$gBitUser->isAdmin() ){
-			// @TODO bugcheck  query
-			// $ret['select_sql'] = ""; 
-			$ret['join_sql'] = "LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm ON ( lcpm.`content_type_guid` = lc.`content_type_guid` )
-				LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcperm ON (lc.`content_id`=lcperm.`content_id`)
-				LEFT OUTER JOIN `".BIT_DB_PREFIX."users_groups_map` ugsm ON ( ugsm.`group_id`=lcperm.`group_id`)
-				LEFT OUTER JOIN `".BIT_DB_PREFIX."users_group_permissions` ugp ON ( ugsm.`group_id`=ugp.`group_id` )";
-			$ret['bind_vars'] = array( $gBitUser->mUserId, 'y', $gBitUser->mUserId, 'view' );
-			$ret['where_sql'] = " AND lcpm.content_type_guid IS NULL 
-								OR  
-								( ugp.group_id IS NOT NULL
-									AND 
-									( lcperm.perm_name IS NULL AND ( ugp.`perm_name` = lcpm.`perm_name` ) 
-										OR 
-										( lcperm.perm_name != lcpm.`perm_name`
-										  OR 
-										  ( lcperm.perm_name = lcpm.`perm_name` 
-											AND 
-											ugsm.user_id = ? 
-											AND 
-											(
-												( lcperm.is_revoked != ? OR lcperm.is_revoked IS NULL) 
-												OR 
-												lc.`user_id`= ? 
-											) 
-										  ) 
-										) 
-									) 
-									AND 
-									( lcpm.`perm_type` = ? )
-								)";  
-			break;
-		};
+	if (true || !$gBitUser->isAdmin()) {
+		// TODO: This should be handled via some declaration in $pParamHash
+		// that turns it on not via this insanity!
+		$traceArr = debug_backtrace();
+		array_shift($traceArr);
+		foreach ($traceArr as $arr) {
+			if (  $arr['function'] == 'getcontentlist' ){
+				$groups = array_keys($gBitUser->mGroups);
+
+				// Handy for debuging to see what is coming out
+				//				$ret['select_sql'] = ", lcpm.`perm_name` AS lc_sec_target, lcpermgrnt.`perm_name` as lc_sec_grant, lcpermrev.`is_revoked` as lc_sec_revoke, ugpgc.`perm_name` AS lc_sec_default ";
+
+				$ret['join_sql'] =
+					// Get the permission name we need to target from here
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm ON ( lcpm.`content_type_guid` = lc.`content_type_guid` AND lcpm.`perm_type` = 'view' )".
+					// Check if a group is allowed by default
+					" LEFT JOIN `".BIT_DB_PREFIX."users_group_permissions` ugpgc ON (ugpgc.`perm_name` = lcpm.`perm_name` AND ugpgc.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") )".
+					// Check if the permission is granted
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermgrnt ON (lc.`content_id` = lcpermgrnt.`content_id` AND lcpermgrnt.`perm_name` = lcpm.`perm_name` AND  lcpermgrnt.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") AND lcpermgrnt.`is_revoked` IS NULL )".
+					// Make sure the permission hasn't been revoked
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermrev ON (lc.`content_id` = lcpermrev.`content_id` AND lcpermrev.`perm_name` = lcpm.`perm_name` AND lcpermrev.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") AND lcpermrev.`is_revoked` = 'y' )";
+
+				$ret['bind_vars'] = array_merge($groups, $groups, $groups);
+
+				// Always revoke if revoked otherwise grant if we should
+				$ret['where_sql'] = " AND lcpermrev.`is_revoked` IS NULL AND ( lcpermgrnt.`perm_name` IS NOT NULL OR ugpgc.`perm_name` IS NOT NULL)";
+
+				break;
+			};
+		}
 	}
+
 	return $ret;
 }
 
