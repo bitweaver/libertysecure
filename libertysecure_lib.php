@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.4 2008/02/20 19:18:01 nickpalmer Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.5 2008/02/25 15:34:09 nickpalmer Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.4 $ $Date: 2008/02/20 19:18:01 $
+* @version $Revision: 1.5 $ $Date: 2008/02/25 15:34:09 $
 * @class LibertySecure
 */
 
@@ -72,7 +72,7 @@ function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 				$ret['bind_vars'] = array_merge($groups, $groups, $groups, $gBitUser->mUserId);
 
 				// Always revoke if revoked otherwise grant if we should
-				$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermrev.`is_revoked` IS NULL AND ( lcpermgrnt.`perm_name` IS NOT NULL OR ugpgc.`perm_name` IS NOT NULL) ) ";
+				$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ";
 
 				break;
 			};
