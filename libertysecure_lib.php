@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.5 2008/02/25 15:34:09 nickpalmer Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.6 2008/02/26 21:05:35 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.5 $ $Date: 2008/02/25 15:34:09 $
+* @version $Revision: 1.6 $ $Date: 2008/02/26 21:05:35 $
 * @class LibertySecure
 */
 
@@ -22,7 +22,6 @@ function secure_register_permissions(){
 			require_once( BIT_ROOT_PATH.$type['handler_package']."/".$type['handler_file'] );
 			$class = $type['handler_class'];
 			$content = new $class();
-			$storeSql = "INSERT INTO";
 			foreach( $permissionTypes as $perm ){
 				$contentPerm = "m".ucfirst($perm)."ContentPerm";
 				// get default perms. Skip packages with defulat p_admin bs.
