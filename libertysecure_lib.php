@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.6 2008/02/26 21:05:35 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.7 2008/02/28 16:36:47 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.6 $ $Date: 2008/02/26 21:05:35 $
+* @version $Revision: 1.7 $ $Date: 2008/02/28 16:36:47 $
 * @class LibertySecure
 */
 
@@ -38,6 +38,14 @@ function secure_register_permissions(){
 		}
 	}
 	return;
+}
+
+
+function secure_get_content_permissions( $pContentGuid ){
+	global $gBitSystem, $gLiberySystem;
+	$query = "SELECT lspm.`perm_type`, lspm.`perm_name` FROM `".BIT_DB_PREFIX."liberty_secure_permissions_map` lspm WHERE lspm.`content_type_guid`=?";
+	$rslt = $gBitSystem->mDb->getAssoc( $query, array( $pContentGuid ) );
+	return $rslt;
 }
 
 
