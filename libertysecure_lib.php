@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.9 2008/03/04 14:03:51 nickpalmer Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.10 2008/03/04 14:47:42 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.9 $ $Date: 2008/03/04 14:03:51 $
+* @version $Revision: 1.10 $ $Date: 2008/03/04 14:47:42 $
 * @class LibertySecure
 */
 
@@ -71,7 +71,7 @@ function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 				// Make sure the permission hasn't been revoked
 				" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermrev ON (lc.`content_id` = lcpermrev.`content_id` AND lcpermrev.`perm_name` = lcpm.`perm_name` AND lcpermrev.`group_id` IN (".implode(',', $groups) .") AND lcpermrev.`is_revoked` = 'y' )";
 
-			$ret['bind_vars'] = $gBitUser->mUserId;
+			$ret['bind_vars'] = array( $gBitUser->mUserId );
 
 			// Always revoke if revoked otherwise grant if we should
 			$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ";
