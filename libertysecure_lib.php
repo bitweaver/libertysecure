@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.8 2008/02/28 17:18:21 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.9 2008/03/04 14:03:51 nickpalmer Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.8 $ $Date: 2008/02/28 17:18:21 $
+* @version $Revision: 1.9 $ $Date: 2008/03/04 14:03:51 $
 * @class LibertySecure
 */
 
@@ -54,37 +54,33 @@ function secure_get_content_permissions( $pContentGuid ){
 function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 	global $gBitSystem, $gBitUser;
 	$ret = array();
-	if (true || !$gBitUser->isAdmin()) {
-		// TODO: This should be handled via some declaration in $pParamHash
-		// that turns it on not via this insanity!
-		$traceArr = debug_backtrace();
-		array_shift($traceArr);
-		foreach ($traceArr as $arr) {
-			if (  $arr['function'] == 'getContentList' ){
-				$groups = array_keys($gBitUser->mGroups);
+	if (!$gBitUser->isAdmin()) {
+		$groups = array_keys($gBitUser->mGroups);
+		// Check that these are all integers just for safety. Assumes they have at least one group but all should have -1
+		if ($gBitSystem->verifyId($groups)) {
+			// Handy for debuging to see what is coming out
+			//				$ret['select_sql'] = ", lcpm.`perm_name` AS lc_sec_target, lcpermgrnt.`perm_name` as lc_sec_grant, lcpermrev.`is_revoked` as lc_sec_revoke, ugpgc.`perm_name` AS lc_sec_default ";
 
-				// Handy for debuging to see what is coming out
-				//				$ret['select_sql'] = ", lcpm.`perm_name` AS lc_sec_target, lcpermgrnt.`perm_name` as lc_sec_grant, lcpermrev.`is_revoked` as lc_sec_revoke, ugpgc.`perm_name` AS lc_sec_default ";
+			$ret['join_sql'] =
+				// Get the permission name we need to target from here
+				" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm ON ( lcpm.`content_type_guid` = lc.`content_type_guid` AND lcpm.`perm_type` = 'view' )".
+				// Check if a group is allowed by default
+				" LEFT JOIN `".BIT_DB_PREFIX."users_group_permissions` ugpgc ON (ugpgc.`perm_name` = lcpm.`perm_name` AND ugpgc.`group_id` IN (".implode(',', $groups) .") )".
+				// Check if the permission is granted
+				" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermgrnt ON (lc.`content_id` = lcpermgrnt.`content_id` AND lcpermgrnt.`perm_name` = lcpm.`perm_name` AND  lcpermgrnt.`group_id` IN (".implode(',', $groups) .") AND lcpermgrnt.`is_revoked` IS NULL )".
+				// Make sure the permission hasn't been revoked
+				" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermrev ON (lc.`content_id` = lcpermrev.`content_id` AND lcpermrev.`perm_name` = lcpm.`perm_name` AND lcpermrev.`group_id` IN (".implode(',', $groups) .") AND lcpermrev.`is_revoked` = 'y' )";
 
-				$ret['join_sql'] =
-					// Get the permission name we need to target from here
-					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm ON ( lcpm.`content_type_guid` = lc.`content_type_guid` AND lcpm.`perm_type` = 'view' )".
-					// Check if a group is allowed by default
-					" LEFT JOIN `".BIT_DB_PREFIX."users_group_permissions` ugpgc ON (ugpgc.`perm_name` = lcpm.`perm_name` AND ugpgc.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") )".
-					// Check if the permission is granted
-					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermgrnt ON (lc.`content_id` = lcpermgrnt.`content_id` AND lcpermgrnt.`perm_name` = lcpm.`perm_name` AND  lcpermgrnt.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") AND lcpermgrnt.`is_revoked` IS NULL )".
-					// Make sure the permission hasn't been revoked
-					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermrev ON (lc.`content_id` = lcpermrev.`content_id` AND lcpermrev.`perm_name` = lcpm.`perm_name` AND lcpermrev.`group_id` IN (".implode(',', array_fill(0, count($groups), '?')) .") AND lcpermrev.`is_revoked` = 'y' )";
+			$ret['bind_vars'] = $gBitUser->mUserId;
 
-				$ret['bind_vars'] = array_merge($groups, $groups, $groups, array( $gBitUser->mUserId ));
-
-				// Always revoke if revoked otherwise grant if we should
-				$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ";
-
-				break;
-			};
+			// Always revoke if revoked otherwise grant if we should
+			$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ";
 		}
-	}
+		else {
+			// Somebody is attempting to hack group Ids. Give them NOTHING!
+			$gBitSystem->fatalError('Invalid Group Id.');
+		}
+	};
 
 	return $ret;
 }
