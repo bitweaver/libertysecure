@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.10 2008/03/04 14:47:42 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.11 2008/03/05 22:22:33 nickpalmer Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.10 $ $Date: 2008/03/04 14:47:42 $
+* @version $Revision: 1.11 $ $Date: 2008/03/05 22:22:33 $
 * @class LibertySecure
 */
 
@@ -59,7 +59,7 @@ function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 		// Check that these are all integers just for safety. Assumes they have at least one group but all should have -1
 		if ($gBitSystem->verifyId($groups)) {
 			// Handy for debuging to see what is coming out
-			//				$ret['select_sql'] = ", lcpm.`perm_name` AS lc_sec_target, lcpermgrnt.`perm_name` as lc_sec_grant, lcpermrev.`is_revoked` as lc_sec_revoke, ugpgc.`perm_name` AS lc_sec_default ";
+			// $ret['select_sql'] = ", lcpm.`perm_name` AS lc_sec_target, lcpermgrnt.`perm_name` as lc_sec_grant, lcpermrev.`is_revoked` as lc_sec_revoke, ugpgc.`perm_name` AS lc_sec_default ";
 
 			$ret['join_sql'] =
 				// Get the permission name we need to target from here
@@ -74,7 +74,38 @@ function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 			$ret['bind_vars'] = array( $gBitUser->mUserId );
 
 			// Always revoke if revoked otherwise grant if we should
-			$ret['where_sql'] = " AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ";
+			// Note: AND is added after comments stuff
+			$ret['where_sql'] = " ( lc.`content_type_guid` != 'bitcomment' AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ) ";
+
+			// Comments add considerable expense. Don't do it unless we have to
+			if (!empty($pParamHash['include_comments'])) {
+				// Handy for debuging to see what is coming out
+				// $ret['select_sql'] = ", lcomm.content_id AS comment_content_id, lc2.`content_id` AS root_content_id, lcpm2.`perm_name` AS lc_sec_target2, lcpermgrnt2.`perm_name` as lc_sec_grant2, lcpermrev2.`is_revoked` as lc_sec_revoke2, ugpgc2.`perm_name` AS lc_sec_default2 ";
+
+				$ret['join_sql'] .=
+					// Get the parent content type
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_comments` lcomm ON (lc.`content_id` = lcomm.`content_id`)".
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content` lc2 ON (lcomm.`root_id` = lc2.`content_id`)".
+					// Get the permission name we need to target from here
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_secure_permissions_map` lcpm2 ON ( lcpm2.`content_type_guid` = lc2.`content_type_guid` AND lcpm2.`perm_type` = 'view' )".
+					// Check if a group is allowed by default
+					" LEFT JOIN `".BIT_DB_PREFIX."users_group_permissions` ugpgc2 ON (ugpgc2.`perm_name` = lcpm2.`perm_name` AND ugpgc2.`group_id` IN (".implode(',', $groups) .") )".
+					// Check if the permission is granted
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermgrnt2 ON (lc2.`content_id` = lcpermgrnt2.`content_id` AND lcpermgrnt2.`perm_name` = lcpm2.`perm_name` AND  lcpermgrnt2.`group_id` IN (".implode(',', $groups) .") AND lcpermgrnt2.`is_revoked` IS NULL )".
+					// Make sure the permission hasn't been revoked
+					" LEFT OUTER JOIN `".BIT_DB_PREFIX."liberty_content_permissions` lcpermrev2 ON (lc2.`content_id` = lcpermrev2.`content_id` AND lcpermrev2.`perm_name` = lcpm2.`perm_name` AND lcpermrev2.`group_id` IN (".implode(',', $groups) .") AND lcpermrev2.`is_revoked` = 'y' )";
+
+				// Replace with new array which handles both where ?s
+				$ret['bind_vars'] = array( $gBitUser->mUserId, $gBitUser->mUserId );
+
+				// Always revoke if revoked otherwise grant if we should
+				// Note: AND added below
+				$ret['where_sql'] = " ( " . $ret['where_sql'] . " OR " .
+					" ( lc.`content_type_guid` = 'bitcomment' AND ( lc2.`user_id` = ? OR lcpermgrnt2.`perm_name` IS NOT NULL OR ( lcpermrev2.`is_revoked` IS NULL AND ugpgc2.`perm_name` IS NOT NULL) ) ) )";
+			}
+
+			// Make sure to include the AND
+			$ret['where_sql'] = " AND " . $ret['where_sql'];
 		}
 		else {
 			// Somebody is attempting to hack group Ids. Give them NOTHING!
