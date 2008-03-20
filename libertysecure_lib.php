@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.12 2008/03/06 03:23:14 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.13 2008/03/20 17:53:52 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.12 $ $Date: 2008/03/06 03:23:14 $
+* @version $Revision: 1.13 $ $Date: 2008/03/20 17:53:52 $
 * @class LibertySecure
 */
 
@@ -78,7 +78,12 @@ function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 			$ret['where_sql'] = " ( lc.`content_type_guid` != 'bitcomment' AND (lc.`user_id` = ? OR lcpermgrnt.`perm_name` IS NOT NULL OR ( lcpermrev.`is_revoked` IS NULL AND ugpgc.`perm_name` IS NOT NULL) ) ) ";
 
 			// Comments add considerable expense. Don't do it unless we have to
-			if (!empty($pParamHash['include_comments']) || ( !empty($pParamHash['content_type_guid']) && in_array('bitcomment', $pParamHash['content_type_guid']) ) ) {
+			// sometimes content_type_guid is a string and sometimes its an array - deal with it.
+			$content_types = array();
+			if ( !empty( $pParamHash['content_type_guid'] ) ){
+				$content_types = is_array( $pParamHash['content_type_guid'] )?$pParamHash['content_type_guid']:array( $pParamHash['content_type_guid'] );
+			}
+			if (!empty($pParamHash['include_comments']) || in_array('bitcomment', $content_types) ) {
 				// Handy for debuging to see what is coming out
 				// $ret['select_sql'] = ", lcomm.content_id AS comment_content_id, lc2.`content_id` AS root_content_id, lcpm2.`perm_name` AS lc_sec_target2, lcpermgrnt2.`perm_name` as lc_sec_grant2, lcpermrev2.`is_revoked` as lc_sec_revoke2, ugpgc2.`perm_name` AS lc_sec_default2 ";
 
