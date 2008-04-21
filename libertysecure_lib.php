@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.13 2008/03/20 17:53:52 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.14 2008/04/21 22:32:25 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.13 $ $Date: 2008/03/20 17:53:52 $
+* @version $Revision: 1.14 $ $Date: 2008/04/21 22:32:25 $
 * @class LibertySecure
 */
 
@@ -54,7 +54,7 @@ function secure_get_content_permissions( $pContentGuid ){
 function secure_content_list_sql( &$pObject, $pParamHash=NULL ) {
 	global $gBitSystem, $gBitUser;
 	$ret = array();
-	if (!$gBitUser->isAdmin()) {
+	if (!$gBitUser->isAdmin() && !( isset( $pParamHash['has_comment_view_perm'] ) && $pParamHash['has_comment_view_perm'] == TRUE) ) {
 		$groups = array_keys($gBitUser->mGroups);
 		// Check that these are all integers just for safety. Assumes they have at least one group but all should have -1
 		if ($gBitSystem->verifyId($groups)) {
