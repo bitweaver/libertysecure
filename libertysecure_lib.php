@@ -1,9 +1,9 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.15 2008/05/02 18:07:01 wjames5 Exp $
+* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.16 2008/05/05 01:54:15 wjames5 Exp $
 * @date created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.15 $ $Date: 2008/05/02 18:07:01 $
+* @version $Revision: 1.16 $ $Date: 2008/05/05 01:54:15 $
 * @class LibertySecure
 */
 
@@ -19,7 +19,7 @@ function secure_register_permissions(){
 	// step through each loaded content types
 	foreach( $gLibertySystem->mContentTypes as $type ){
 		if ( isset($type['handler_package']) && isset( $type['handler_file'] ) && isset( $type['handler_class'] ) ){
-			require_once( BIT_ROOT_PATH.$type['handler_package']."/".$type['handler_file'] );
+			require_once( $gBitSystem->mPackages[$type['handler_package']]['path']."/".$type['handler_file'] );
 			$class = $type['handler_class'];
 			$content = new $class();
 			foreach( $permissionTypes as $perm ){
