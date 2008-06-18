@@ -1,10 +1,10 @@
 <?php
 /**
-* $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.16 2008/05/05 01:54:15 wjames5 Exp $
-* @date created 2006/08/01
+* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.17 2008/06/18 10:08:33 lsces Exp $
+* created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.16 $ $Date: 2008/05/05 01:54:15 $
-* @class LibertySecure
+* @version $Revision: 1.17 $ $Date: 2008/06/18 10:08:33 $
+* @package libertysecure
 */
 
 function secure_register_permissions(){
