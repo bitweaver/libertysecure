@@ -1,12 +1,15 @@
 <?php
 /**
-* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.17 2008/06/18 10:08:33 lsces Exp $
+* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.18 2008/06/18 10:23:52 lsces Exp $
 * created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.17 $ $Date: 2008/06/18 10:08:33 $
+* @version $Revision: 1.18 $ $Date: 2008/06/18 10:23:52 $
 * @package libertysecure
 */
 
+/**
+ * Routines
+ */
 function secure_register_permissions(){
 	global $gBitSystem, $gLibertySystem;
 
