@@ -17,5 +17,5 @@ if( !empty( $_REQUEST['register_perms'] ) ) {
 	*/
 	$gBitSmarty->assign( 'updated', TRUE );
 }
-$gBitSystem->display( 'bitpackage:libertysecure/register_permissions.tpl', tra( 'LibertySecure Register Permissions' ));
+$gBitSystem->display( 'bitpackage:libertysecure/register_permissions.tpl', tra( 'LibertySecure Register Permissions' ), array( 'display_mode' => 'admin' ));
 ?>
