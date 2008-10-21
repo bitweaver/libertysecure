@@ -1,9 +1,9 @@
 <?php
 /**
-* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.19 2008/10/03 17:20:16 wjames5 Exp $
+* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.20 2008/10/21 00:16:25 wjames5 Exp $
 * created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.19 $ $Date: 2008/10/03 17:20:16 $
+* @version $Revision: 1.20 $ $Date: 2008/10/21 00:16:25 $
 * @package libertysecure
 */
 
@@ -14,7 +14,7 @@ function secure_register_permissions(){
 	global $gBitSystem, $gLibertySystem;
 
 	// these are the common basic permission types across packages
-	$permissionTypes = array('view', 'create', 'edit', 'admin');
+	$permissionTypes = array('view', 'create', 'update', 'admin');
 
 	// dump all perms in liberty_secure_permissions_map table
 	$gBitSystem->mDb->query( "DELETE FROM `".BIT_DB_PREFIX."liberty_secure_permissions_map`" );
