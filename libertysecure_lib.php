@@ -1,9 +1,9 @@
 <?php
 /**
-* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.20 2008/10/21 00:16:25 wjames5 Exp $
+* @version $Header: /cvsroot/bitweaver/_bit_libertysecure/libertysecure_lib.php,v 1.21 2008/11/24 19:17:56 tekimaki_admin Exp $
 * created 2006/08/01
 * @author Will <will@onnyturf.com>
-* @version $Revision: 1.20 $ $Date: 2008/10/21 00:16:25 $
+* @version $Revision: 1.21 $ $Date: 2008/11/24 19:17:56 $
 * @package libertysecure
 */
 
@@ -22,7 +22,7 @@ function secure_register_permissions(){
 	// step through each loaded content types
 	foreach( $gLibertySystem->mContentTypes as $type ){
 		if ( isset($type['handler_package']) && isset( $type['handler_file'] ) && isset( $type['handler_class'] ) ){
-			require_once( $gBitSystem->mPackages[$type['handler_package']]['path']."/".$type['handler_file'] );
+			require_once( $gBitSystem->mPackages[$type['handler_package']]['path'].$type['handler_file'] );
 			$class = $type['handler_class'];
 			$content = new $class();
 			foreach( $permissionTypes as $perm ){
@@ -35,7 +35,7 @@ function secure_register_permissions(){
 					$bindVars[] = $content->mType['content_type_guid'];
 					// store them in liberty_secure_permissions_map table
 					$storeSql = "INSERT INTO `".BIT_DB_PREFIX."liberty_secure_permissions_map`(`perm_type`,`perm_name`,`content_type_guid`) VALUES (?,?,?)";
-					$gBitSystem->mDb->query( $storeSql, $bindVars );
+					$rslt = $gBitSystem->mDb->query( $storeSql, $bindVars );
 				}
 			}
 		}
