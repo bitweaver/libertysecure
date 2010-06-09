@@ -1,4 +1,4 @@
-{* $Header: /cvsroot/bitweaver/_bit_libertysecure/templates/register_permissions.tpl,v 1.1 2008/02/13 00:52:28 wjames5 Exp $ *}
+{* $Header$ *}
 {strip}
 <div class="floaticon">{bithelp}</div>
 
