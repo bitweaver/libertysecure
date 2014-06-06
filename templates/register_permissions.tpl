@@ -21,7 +21,7 @@
 			{else}
 				<p>LibertySecure augments the Liberty Package to support individual custom content permissions. Custom content permissions allow you to set unique permissions individual of the default group permissions on any Liberty based content, such as wiki pages, blog posts, etc. LibertySecure augements Liberty by registering the default View, Edit, and Admin permissions of all installed packages. Once those permissions are registered in the database you can safely begin using custom content permissions. You can register these default permissions by clicking the button below.</p> 
 				<p>{formfeedback warning="Every time you install a new package you must rerun this Registration, or else you may experiece a security breach when using custom content permissions."}</p>
-				<div class="control-group submit">
+				<div class="form-group submit">
 					<input type="submit" class="btn btn-default" name="register_perms" value="{tr}Register Permissions{/tr}" />
 				</div>
 			{/if}
